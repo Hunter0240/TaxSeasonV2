@@ -1,0 +1,37 @@
+query GetTransactions($address: String!, $fromDate: DateTime!, $toDate: DateTime!) {
+  EVM(dataset: combined, network: eth) {
+    Transactions(
+      where: {
+        Transaction: {
+          To: {is: $address}
+        }
+        Block: {
+          Time: {
+            since: $fromDate
+            till: $toDate
+          }
+        }
+      }
+    ) {
+      Block {
+        Time
+        Number
+      }
+      Transaction {
+        From
+        Gas
+        GasPrice
+        Hash
+        Index
+        Nonce
+        Cost
+        Data
+        To
+        Value
+      }
+      TransactionStatus {
+        Success
+      }
+    }
+  }
+} 

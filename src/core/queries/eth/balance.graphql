@@ -1,0 +1,19 @@
+query GetBalance($address: String!) {
+  EVM(dataset: combined, network: eth) {
+    BalanceUpdates(
+      where: {
+        BalanceUpdate: {
+          Address: {is: $address}
+        }
+      }
+    ) {
+      Currency {
+        Name
+        Symbol
+        SmartContract
+      }
+      sum(of: BalanceUpdate_AmountInUSD, selectWhere: {gt: "0"})
+    }
+  }
+}
+

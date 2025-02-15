@@ -1,0 +1,77 @@
+query SmartContractCalls(
+  $network: evm_network!
+  $from: DateTime!
+  $till: DateTime!
+  $address: String!
+) {
+  EVM(dataset: combined, network: $network) {
+    Calls(
+      limit: {count: 10}
+      orderBy: {descending: Block_Time}
+      where: {
+        Call: {
+          To: {is: $address}
+        }
+        Block: {
+          Time: {
+            since: $from
+            till: $till
+          }
+        }
+      }
+    ) {
+      Call {
+        LogCount
+        InternalCalls
+        From
+        To
+        Gas
+        GasUsed
+        Value
+        Success
+        Error
+        Signature {
+          Name
+          SignatureHash
+          SignatureType
+        }
+      }
+      Transaction {
+        Gas
+        Hash
+        From
+        To
+        Type
+        Index
+      }
+      Block {
+        Time
+        Number
+      }
+      Arguments {
+        Name
+        Index
+        Value {
+          ... on EVM_ABI_Boolean_Value_Arg {
+            bool
+          }
+          ... on EVM_ABI_Bytes_Value_Arg {
+            hex
+          }
+          ... on EVM_ABI_BigInt_Value_Arg {
+            bigInteger
+          }
+          ... on EVM_ABI_Address_Value_Arg {
+            address
+          }
+          ... on EVM_ABI_String_Value_Arg {
+            string
+          }
+          ... on EVM_ABI_Integer_Value_Arg {
+            integer
+          }
+        }
+      }
+    }
+  }
+} 
