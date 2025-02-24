@@ -27,6 +27,7 @@ coverage/
 *.swo
 .DS_Store
 Thumbs.db
+.cursor/
 
 # Logs
 logs/
@@ -47,7 +48,6 @@ junit.xml
 
 # Project specific
 prompts/           # AI assistant prompt templates and state
-.cursor/           # Cursor IDE specific files
 
 # TypeScript
 *.tsbuildinfo
