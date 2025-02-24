@@ -101,11 +101,27 @@ const { query, variables } = QueryTemplates.getTransactionHistory(address, {
 });
 ```
 
-Available templates:
-- `getTokenBalances(address, options)`
-- `getTransactionHistory(address, options)`
-- `getTokenPriceHistory(tokenAddress, options)`
-- `getContractEvents(contractAddress, options)`
+#### Basic Templates:
+- `getTokenBalances(address, options)` - Get token balances for an address
+- `getTransactionHistory(address, options)` - Get transaction history for an address
+- `getTokenPriceHistory(tokenAddress, options)` - Get token price history
+- `getContractEvents(contractAddress, options)` - Get smart contract events
+
+#### NFT Templates:
+- `getNFTCollection(collectionAddress, options)` - Get NFT collection data
+- `getNFTsByOwner(ownerAddress, options)` - Get NFTs owned by an address
+- `getNFTTransfers(options)` - Get NFT transfer history
+
+#### DeFi Templates:
+- `getDEXLiquidityPools(options)` - Get DEX liquidity pool data
+- `getDEXSwaps(options)` - Get DEX swap data
+- `getLendingMarkets(options)` - Get lending protocol data
+
+#### Analytics Templates:
+- `getGasPriceAnalytics(options)` - Get gas price analytics
+
+#### Utility Methods:
+- `loadQueryFromFile(filePath)` - Load a query from a .graphql file
 
 ## Usage Examples
 

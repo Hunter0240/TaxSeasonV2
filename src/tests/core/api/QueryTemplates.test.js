@@ -208,6 +208,311 @@ describe('QueryTemplates', () => {
     });
   });
   
+  describe('NFT Collection Query', () => {
+    test('should create an NFT collection query with default options', () => {
+      const collectionAddress = '0x123abc';
+      const { query, variables } = QueryTemplates.getNFTCollection(collectionAddress);
+      
+      // Check query structure
+      expect(query).toContain('query GetNFTCollection');
+      expect(query).toContain('$collectionAddress: String!');
+      expect(query).toContain('$limit: Int!');
+      expect(query).toContain('nftCollection(address: $collectionAddress)');
+      expect(query).toContain('tokens(options: { limit: $limit }');
+      
+      // Check variables
+      expect(variables).toEqual({
+        collectionAddress: '0x123abc',
+        limit: 20
+      });
+    });
+    
+    test('should create an NFT collection query with token type filter', () => {
+      const collectionAddress = '0x123abc';
+      const options = {
+        tokenType: 'ERC721',
+        network: 'polygon'
+      };
+      
+      const { query, variables } = QueryTemplates.getNFTCollection(collectionAddress, options);
+      
+      // Check token type filter
+      expect(query).toContain('$tokenType: String');
+      expect(query).toContain('tokenType: { is: $tokenType }');
+      expect(query).toContain('polygon {');
+      
+      // Check variables
+      expect(variables).toEqual({
+        collectionAddress: '0x123abc',
+        limit: 20,
+        tokenType: 'ERC721'
+      });
+    });
+  });
+  
+  describe('NFTs By Owner Query', () => {
+    test('should create an NFTs by owner query with default options', () => {
+      const ownerAddress = '0x123abc';
+      const { query, variables } = QueryTemplates.getNFTsByOwner(ownerAddress);
+      
+      // Check query structure
+      expect(query).toContain('query GetNFTsByOwner');
+      expect(query).toContain('$ownerAddress: String!');
+      expect(query).toContain('$limit: Int!');
+      expect(query).toContain('nftOwnership(');
+      expect(query).toContain('owner: { is: $ownerAddress }');
+      
+      // Check variables
+      expect(variables).toEqual({
+        ownerAddress: '0x123abc',
+        limit: 50
+      });
+    });
+    
+    test('should create an NFTs by owner query with collection filter', () => {
+      const ownerAddress = '0x123abc';
+      const options = {
+        collectionAddress: '0x456def',
+        network: 'bsc'
+      };
+      
+      const { query, variables } = QueryTemplates.getNFTsByOwner(ownerAddress, options);
+      
+      // Check collection filter
+      expect(query).toContain('$collectionAddress: String');
+      expect(query).toContain('collection: { address: { is: $collectionAddress } }');
+      expect(query).toContain('bsc {');
+      
+      // Check variables
+      expect(variables).toEqual({
+        ownerAddress: '0x123abc',
+        limit: 50,
+        collectionAddress: '0x456def'
+      });
+    });
+  });
+  
+  describe('NFT Transfers Query', () => {
+    test('should create an NFT transfers query with default options', () => {
+      const { query, variables } = QueryTemplates.getNFTTransfers();
+      
+      // Check query structure
+      expect(query).toContain('query GetNFTTransfers');
+      expect(query).toContain('$limit: Int!');
+      expect(query).toContain('nftTransfers(');
+      expect(query).toContain('options: { limit: $limit, desc: "block.timestamp" }');
+      
+      // Check variables
+      expect(variables).toEqual({
+        limit: 50
+      });
+    });
+    
+    test('should create an NFT transfers query with multiple filters', () => {
+      const options = {
+        tokenId: '123',
+        collectionAddress: '0x456def',
+        from: '2023-01-01T00:00:00Z',
+        to: '2023-12-31T23:59:59Z',
+        network: 'arbitrum'
+      };
+      
+      const { query, variables } = QueryTemplates.getNFTTransfers(options);
+      
+      // Check filters
+      expect(query).toContain('$tokenId: String!');
+      expect(query).toContain('$collectionAddress: String!');
+      expect(query).toContain('$from: ISO8601DateTime!');
+      expect(query).toContain('$to: ISO8601DateTime!');
+      expect(query).toContain('token: { tokenId: { is: $tokenId } }');
+      expect(query).toContain('token: { collection: { address: { is: $collectionAddress } } }');
+      expect(query).toContain('date: {since: $from, till: $to}');
+      expect(query).toContain('arbitrum {');
+      
+      // Check variables
+      expect(variables).toEqual({
+        limit: 50,
+        tokenId: '123',
+        collectionAddress: '0x456def',
+        from: '2023-01-01T00:00:00Z',
+        to: '2023-12-31T23:59:59Z'
+      });
+    });
+  });
+  
+  describe('DEX Liquidity Pools Query', () => {
+    test('should create a DEX liquidity pools query with default options', () => {
+      const { query, variables } = QueryTemplates.getDEXLiquidityPools();
+      
+      // Check query structure
+      expect(query).toContain('query GetDEXLiquidityPools');
+      expect(query).toContain('$limit: Int!');
+      expect(query).toContain('liquidityPools(');
+      expect(query).toContain('options: { limit: $limit, desc: "totalValueLocked" }');
+      
+      // Check variables
+      expect(variables).toEqual({
+        limit: 20
+      });
+    });
+    
+    test('should create a DEX liquidity pools query with protocol and token filters', () => {
+      const options = {
+        protocol: 'Uniswap',
+        tokenAddress: '0x123abc',
+        network: 'optimism'
+      };
+      
+      const { query, variables } = QueryTemplates.getDEXLiquidityPools(options);
+      
+      // Check filters
+      expect(query).toContain('$protocol: String!');
+      expect(query).toContain('$tokenAddress: String!');
+      expect(query).toContain('protocol: { is: $protocol }');
+      expect(query).toContain('baseCurrency: { is: $tokenAddress }');
+      expect(query).toContain('optimism {');
+      
+      // Check variables
+      expect(variables).toEqual({
+        limit: 20,
+        protocol: 'Uniswap',
+        tokenAddress: '0x123abc'
+      });
+    });
+  });
+  
+  describe('DEX Swaps Query', () => {
+    test('should create a DEX swaps query with default options', () => {
+      const { query, variables } = QueryTemplates.getDEXSwaps();
+      
+      // Check query structure
+      expect(query).toContain('query GetDEXSwaps');
+      expect(query).toContain('$limit: Int!');
+      expect(query).toContain('dexTrades(');
+      expect(query).toContain('options: { limit: $limit, desc: "block.timestamp" }');
+      
+      // Check variables
+      expect(variables).toEqual({
+        limit: 50
+      });
+    });
+    
+    test('should create a DEX swaps query with multiple filters', () => {
+      const options = {
+        protocol: 'Uniswap',
+        tokenAddress: '0x123abc',
+        from: '2023-01-01T00:00:00Z',
+        to: '2023-12-31T23:59:59Z',
+        network: 'polygon'
+      };
+      
+      const { query, variables } = QueryTemplates.getDEXSwaps(options);
+      
+      // Check filters
+      expect(query).toContain('$protocol: String!');
+      expect(query).toContain('$tokenAddress: String!');
+      expect(query).toContain('$from: ISO8601DateTime!');
+      expect(query).toContain('$to: ISO8601DateTime!');
+      expect(query).toContain('protocol: { is: $protocol }');
+      expect(query).toContain('tokenIn: { is: $tokenAddress }');
+      expect(query).toContain('date: {since: $from, till: $to}');
+      expect(query).toContain('polygon {');
+      
+      // Check variables
+      expect(variables).toEqual({
+        limit: 50,
+        protocol: 'Uniswap',
+        tokenAddress: '0x123abc',
+        from: '2023-01-01T00:00:00Z',
+        to: '2023-12-31T23:59:59Z'
+      });
+    });
+  });
+  
+  describe('Gas Price Analytics Query', () => {
+    test('should create a gas price analytics query with default options', () => {
+      const { query, variables } = QueryTemplates.getGasPriceAnalytics();
+      
+      // Check query structure
+      expect(query).toContain('query GetGasPriceAnalytics');
+      expect(query).toContain('$interval: String!');
+      expect(query).toContain('gasPrice(');
+      expect(query).toContain('timeInterval {');
+      expect(query).toContain('1d');
+      
+      // Check variables
+      expect(variables).toEqual({
+        interval: '1d'
+      });
+    });
+    
+    test('should create a gas price analytics query with date filters', () => {
+      const options = {
+        from: '2023-01-01T00:00:00Z',
+        to: '2023-12-31T23:59:59Z',
+        interval: '1h',
+        network: 'arbitrum'
+      };
+      
+      const { query, variables } = QueryTemplates.getGasPriceAnalytics(options);
+      
+      // Check filters
+      expect(query).toContain('$from: ISO8601DateTime!');
+      expect(query).toContain('$to: ISO8601DateTime!');
+      expect(query).toContain('date: {since: $from, till: $to}');
+      expect(query).toContain('arbitrum {');
+      expect(query).toContain('1h');
+      
+      // Check variables
+      expect(variables).toEqual({
+        interval: '1h',
+        from: '2023-01-01T00:00:00Z',
+        to: '2023-12-31T23:59:59Z'
+      });
+    });
+  });
+  
+  describe('Lending Markets Query', () => {
+    test('should create a lending markets query with default options', () => {
+      const { query, variables } = QueryTemplates.getLendingMarkets();
+      
+      // Check query structure
+      expect(query).toContain('query GetLendingMarkets');
+      expect(query).toContain('$limit: Int!');
+      expect(query).toContain('lendingMarkets(');
+      expect(query).toContain('options: { limit: $limit, desc: "totalValueLocked" }');
+      
+      // Check variables
+      expect(variables).toEqual({
+        limit: 20
+      });
+    });
+    
+    test('should create a lending markets query with protocol and token filters', () => {
+      const options = {
+        protocol: 'Aave',
+        tokenAddress: '0x123abc',
+        network: 'polygon'
+      };
+      
+      const { query, variables } = QueryTemplates.getLendingMarkets(options);
+      
+      // Check filters
+      expect(query).toContain('$protocol: String!');
+      expect(query).toContain('$tokenAddress: String!');
+      expect(query).toContain('protocol: { is: $protocol }');
+      expect(query).toContain('token: { address: { is: $tokenAddress } }');
+      expect(query).toContain('polygon {');
+      
+      // Check variables
+      expect(variables).toEqual({
+        limit: 20,
+        protocol: 'Aave',
+        tokenAddress: '0x123abc'
+      });
+    });
+  });
+  
   describe('Load Query From File', () => {
     test('should load a query from a file', () => {
       const mockQuery = 'query TestQuery { test { field } }';
