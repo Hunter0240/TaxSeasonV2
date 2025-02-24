@@ -1,5 +1,7 @@
 const axios = require('axios');
 const rax = require('retry-axios');
+const { QueryBuilder } = require('./QueryBuilder');
+const { ResponseParser } = require('./ResponseParser');
 
 class BitqueryAPI {
   constructor(clientId, clientSecret) {
@@ -23,9 +25,12 @@ class BitqueryAPI {
     };
   }
 
+  /**
+   * Authenticate with the Bitquery API
+   * @returns {Promise<void>}
+   */
   async authenticate() {
     if (!this.accessToken) {
-      // Create URLSearchParams to send data as form-urlencoded
       const params = new URLSearchParams();
       params.append('grant_type', 'client_credentials');
       params.append('client_id', this.clientId);
@@ -44,7 +49,6 @@ class BitqueryAPI {
         );
         
         this.accessToken = authResponse.data.access_token;
-        // Update the headers with the new access token
         this.axiosInstance.defaults.headers['Authorization'] = `Bearer ${this.accessToken}`;
       } catch (error) {
         console.error('Authentication error:', error.response?.data || error.message);
@@ -53,12 +57,55 @@ class BitqueryAPI {
     }
   }
 
+  /**
+   * Execute a GraphQL query
+   * @param {string} queryName - Name of the query
+   * @param {string[]} fields - Fields to select
+   * @param {Object} variables - Query variables
+   * @param {Object} options - Additional options
+   * @returns {Promise<Object>} - Query response
+   */
+  async executeQuery(queryName, fields, variables = {}, options = {}) {
+    try {
+      await this.authenticate();
+      
+      const { query, variables: queryVars } = QueryBuilder.createQuery(
+        queryName,
+        fields,
+        variables,
+        options
+      );
+
+      console.log('Executing GraphQL query:', {
+        query,
+        variables: queryVars
+      });
+      
+      const response = await this.axiosInstance.post(
+        this.baseURL,
+        {
+          query,
+          variables: queryVars
+        }
+      );
+
+      return ResponseParser.parse(response.data);
+    } catch (error) {
+      return this.handleError(error);
+    }
+  }
+
+  /**
+   * Execute a custom GraphQL query
+   * @param {string} query - Raw GraphQL query
+   * @param {Object} variables - Query variables
+   * @returns {Promise<Object>} - Query response
+   */
   async query(query, variables = {}) {
     try {
       await this.authenticate();
       
-      // Debug logging
-      console.log('Sending GraphQL query:', {
+      console.log('Executing raw GraphQL query:', {
         query,
         variables
       });
@@ -71,18 +118,17 @@ class BitqueryAPI {
         }
       );
 
-      // Check for GraphQL errors
-      if (response.data.errors) {
-        console.error('GraphQL errors:', response.data.errors);
-        return response.data; // Return the error response for proper handling
-      }
-
-      return response.data;
+      return ResponseParser.parse(response.data);
     } catch (error) {
       return this.handleError(error);
     }
   }
 
+  /**
+   * Handle API errors
+   * @param {Error} error - Error object
+   * @returns {Object} - Formatted error response
+   */
   handleError(error) {
     if (error.response) {
       console.error('API Error Details:', {
@@ -92,29 +138,20 @@ class BitqueryAPI {
         headers: error.response.headers
       });
 
-      // Return a structured error response
-      return {
-        data: null,
-        errors: [{
-          message: `API Error: ${error.response.status} - ${JSON.stringify(error.response.data.errors)}`,
-          extensions: {
-            code: error.response.status,
-            response: error.response.data
-          }
-        }]
-      };
+      return ResponseParser.createErrorResponse(
+        `API Error: ${error.response.status}`,
+        {
+          status: error.response.status,
+          response: error.response.data
+        }
+      );
     }
 
     console.error('Network Error:', error.message);
-    return {
-      data: null,
-      errors: [{
-        message: error.message,
-        extensions: {
-          code: 'NETWORK_ERROR'
-        }
-      }]
-    };
+    return ResponseParser.createErrorResponse(
+      error.message,
+      { code: 'NETWORK_ERROR' }
+    );
   }
 }
 
